@@ -14,9 +14,9 @@ from matplotlib import colors
 
 def plot_color_gradients(gradients, names):
     # For pretty latex fonts (commented out, because it does not work on some machines)
-    #rc('text', usetex=True)
-    #rc('font', family='serif', serif=['Times'], size=10)
-    #rc('legend', fontsize=10)
+    # rc('text', usetex=True)
+    # rc('font', family='serif', serif=['Times'], size=10)
+    # rc('legend', fontsize=10)
 
     column_width_pt = 400  # Show in latex using \the\linewidth
     pt_per_inch = 72
@@ -96,23 +96,23 @@ def gradient_rgb_gbr_full(v):
 
 
 def gradient_rgb_wb_custom(v):
-    thresholdValue = 1/7
+    thresholdValue = 1 / 7
     rangeAmount = 7
 
     if v <= thresholdValue:
-        return (1, 1-(v*rangeAmount), 1)
+        return (1, 1 - (v * rangeAmount), 1)
     elif v > thresholdValue and v <= 2 * thresholdValue:
-        return (1-((v - thresholdValue) * rangeAmount), 0, 1)
+        return (1 - ((v - thresholdValue) * rangeAmount), 0, 1)
     elif v > 2 * thresholdValue and v <= 3 * thresholdValue:
         return (0, ((v - 2 * thresholdValue) * rangeAmount), 1)
-    elif v > 3 * thresholdValue and v <= 4 * thresholdValue: #
-        return (0, 1, 1-((v - 3 * thresholdValue) * rangeAmount))
+    elif v > 3 * thresholdValue and v <= 4 * thresholdValue:  #
+        return (0, 1, 1 - ((v - 3 * thresholdValue) * rangeAmount))
     elif v > 4 * thresholdValue and v <= 5 * thresholdValue:
         return (((v - 4 * thresholdValue) * rangeAmount), 1, 0)
     elif v > 5 * thresholdValue and v <= 6 * thresholdValue:
-        return (1, 1-((v - 5 * thresholdValue) * rangeAmount), 0)
+        return (1, 1 - ((v - 5 * thresholdValue) * rangeAmount), 0)
     else:
-        return (1-((v - 6 * thresholdValue) * rangeAmount), 0, 0)
+        return (1 - ((v - 6 * thresholdValue) * rangeAmount), 0, 0)
 
 
 def gradient_hsv_bw(v):
