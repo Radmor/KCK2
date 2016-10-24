@@ -14,9 +14,9 @@ from matplotlib import colors
 
 def plot_color_gradients(gradients, names):
     # For pretty latex fonts (commented out, because it does not work on some machines)
-    # rc('text', usetex=True)
-    # rc('font', family='serif', serif=['Times'], size=10)
-    rc('legend', fontsize=10)
+    #rc('text', usetex=True)
+    #rc('font', family='serif', serif=['Times'], size=10)
+    #rc('legend', fontsize=10)
 
     column_width_pt = 400  # Show in latex using \the\linewidth
     pt_per_inch = 72
@@ -62,7 +62,7 @@ def hsv2rgb(h, s, v):
         Rprim, Gprim, Bprim = (x, 0, c)
     elif h >= 300 and h < 360:
         Rprim, Gprim, Bprim = (c, 0, x)
-    elif h==360:
+    elif h == 360:
         Rprim, Gprim, Bprim = (c, x, 0)
     else:
         raise ValueError
@@ -75,30 +75,44 @@ def gradient_rgb_bw(v):
 
 
 def gradient_rgb_gbr(v):
-    if v<=0.5:
-        return (0, 1-v*2, v*2)
+    if v <= 0.5:
+        return (0, 1 - v * 2, v * 2)
     else:
-        return ((v-0.5)*2, 0, 1-((v-0.5)*2))
+        return ((v - 0.5) * 2, 0, 1 - ((v - 0.5) * 2))
 
 
 def gradient_rgb_gbr_full(v):
+    thresholdValue = 0.25
+    rangeAmount = 4
 
-    thresholdValue=0.25
-    rangeAmount=4
-
-    if v<=thresholdValue:
-        return (0, 1, v*rangeAmount)
-    elif v>thresholdValue and v<=2*thresholdValue:
-        return (0, 1-((v-thresholdValue)*rangeAmount), 1)
-    elif v>2*thresholdValue and v<=3*thresholdValue:
-        return (((v-2*thresholdValue)*rangeAmount), 0, 1)
+    if v <= thresholdValue:
+        return (0, 1, v * rangeAmount)
+    elif v > thresholdValue and v <= 2 * thresholdValue:
+        return (0, 1 - ((v - thresholdValue) * rangeAmount), 1)
+    elif v > 2 * thresholdValue and v <= 3 * thresholdValue:
+        return (((v - 2 * thresholdValue) * rangeAmount), 0, 1)
     else:
-        return (1, 0, 1-((v-3*thresholdValue)*rangeAmount))
+        return (1, 0, 1 - ((v - 3 * thresholdValue) * rangeAmount))
 
 
 def gradient_rgb_wb_custom(v):
-    # TODO
-    return (0, 0, 0)
+    thresholdValue = 1/7
+    rangeAmount = 7
+
+    if v <= thresholdValue:
+        return (1, 1-(v*rangeAmount), 1)
+    elif v > thresholdValue and v <= 2 * thresholdValue:
+        return (1-((v - thresholdValue) * rangeAmount), 0, 1)
+    elif v > 2 * thresholdValue and v <= 3 * thresholdValue:
+        return (0, ((v - 2 * thresholdValue) * rangeAmount), 1)
+    elif v > 3 * thresholdValue and v <= 4 * thresholdValue: #
+        return (0, 1, 1-((v - 3 * thresholdValue) * rangeAmount))
+    elif v > 4 * thresholdValue and v <= 5 * thresholdValue:
+        return (((v - 4 * thresholdValue) * rangeAmount), 1, 0)
+    elif v > 5 * thresholdValue and v <= 6 * thresholdValue:
+        return (1, 1-((v - 5 * thresholdValue) * rangeAmount), 0)
+    else:
+        return (1-((v - 6 * thresholdValue) * rangeAmount), 0, 0)
 
 
 def gradient_hsv_bw(v):
@@ -106,40 +120,47 @@ def gradient_hsv_bw(v):
 
 
 def gradient_hsv_gbr(v):
-    return hsv2rgb(v*240+120, 1, 1)
+    return hsv2rgb(v * 240 + 120, 1, 1)
 
 
 def gradient_hsv_unknown(v):
-    return hsv2rgb(120-v*120, 0.4, 1)
+    return hsv2rgb(120 - v * 120, 0.4, 1)
 
 
 def gradient_hsv_custom(v):
-    return hsv2rgb(360-v*360, v, 1)
+    return hsv2rgb(360 - v * 360, v, 1)
 
 
 class HSV2RGBtests(unittest.TestCase):
     def test_black(self):
-        self.assertEqual(hsv2rgb(0,0,0),(0,0,0))
+        self.assertEqual(hsv2rgb(0, 0, 0), (0, 0, 0))
+
     def test_lime(self):
-        self.assertEqual(hsv2rgb(120,1,1),(0,1,0))
+        self.assertEqual(hsv2rgb(120, 1, 1), (0, 1, 0))
+
     def test_silver(self):
-        self.assertEqual(hsv2rgb(0,0,0.75),(0.75,0.75,0.75))
+        self.assertEqual(hsv2rgb(0, 0, 0.75), (0.75, 0.75, 0.75))
+
     def test_navy(self):
-        self.assertEqual(hsv2rgb(240,1,0.5),(0,0,0.5))
+        self.assertEqual(hsv2rgb(240, 1, 0.5), (0, 0, 0.5))
+
     def test_cyan(self):
-        self.assertEqual(hsv2rgb(180,1,1),(0,1,1))
+        self.assertEqual(hsv2rgb(180, 1, 1), (0, 1, 1))
+
     def test_teal(self):
-        self.assertEqual(hsv2rgb(180,1,0.5),(0,0.5,0.5))
+        self.assertEqual(hsv2rgb(180, 1, 0.5), (0, 0.5, 0.5))
+
     def test_maroon(self):
-        self.assertEqual(hsv2rgb(0,1,0.5),(0.5,0,0))
+        self.assertEqual(hsv2rgb(0, 1, 0.5), (0.5, 0, 0))
+
 
 if __name__ == '__main__':
-    #unittest.main()
+    # unittest.main()
 
-    data=np.loadtxt('big.dem',skiprows=1)
+    #data = np.loadtxt('big.dem', skiprows=1)
 
-    plt.imshow(data, cmap='gray')
-    plt.savefig('nowy.pdf')
+    #plt.imshow(data, cmap='gray')
+    #plt.savefig('nowy.pdf')
 
 
     def toname(g):
