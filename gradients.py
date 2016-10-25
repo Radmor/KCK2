@@ -40,7 +40,7 @@ def plot_color_gradients(gradients, names):
         y_text = pos[1] + pos[3] / 2.
         fig.text(x_text, y_text, name, va='center', ha='left', fontsize=10)
 
-    fig.savefig('my-gradients.pdf')
+    fig.savefig('gradients.pdf')
 
 
 def hsv2rgb(h, s, v):
@@ -130,6 +130,24 @@ def gradient_hsv_unknown(v):
 def gradient_hsv_custom(v):
     return hsv2rgb(360 - v * 360, v, 1)
 
+def normalize_image(imageData):
+
+    min=np.amin(imageData)
+    heightRange=np.amax(imageData)-min
+
+
+    for x in np.nditer(imageData,op_flags=['readwrite']):
+        x[...]=(x-min)/heightRange
+
+    return imageData
+
+def plot_colored_map():
+    data = np.loadtxt('big.dem', skiprows=1)
+
+    data=normalize_image(data)
+
+    plt.imshow(data)
+    plt.savefig('colored_map.pdf')
 
 class HSV2RGBtests(unittest.TestCase):
     def test_black(self):
@@ -157,10 +175,7 @@ class HSV2RGBtests(unittest.TestCase):
 if __name__ == '__main__':
     # unittest.main()
 
-    #data = np.loadtxt('big.dem', skiprows=1)
-
-    #plt.imshow(data, cmap='gray')
-    #plt.savefig('nowy.pdf')
+    plot_colored_map()
 
 
     def toname(g):
