@@ -130,24 +130,43 @@ def gradient_hsv_unknown(v):
 def gradient_hsv_custom(v):
     return hsv2rgb(360 - v * 360, v, 1)
 
+
+def gradient_hsv_gr(v):
+    return hsv2rgb(120 - (v * 120), 1, 1)
+
 def normalize_image(imageData):
+    min = np.amin(imageData)
+    heightRange = np.amax(imageData) - min
 
-    min=np.amin(imageData)
-    heightRange=np.amax(imageData)-min
-
-
-    for x in np.nditer(imageData,op_flags=['readwrite']):
-        x[...]=(x-min)/heightRange
+    for x in np.nditer(imageData, op_flags=['readwrite']):
+        x[...] = (x - min) / heightRange
 
     return imageData
+
+def color_image(imageData):
+
+    imageHeight=500
+    imageWidth=500
+    img = np.zeros((imageWidth, imageHeight, 3))
+
+    # imageData=imageData[...,np.newaxis]
+    #
+    # for x in np.nditer(imageData, op_flags=['readwrite']):
+    #     x[...] = gradient_hsv_gr(x)
+
+
+    return np.array([[gradient_hsv_gr(imageData[j,i]) for i in range(0,500)] for j in range(0,500)])
 
 def plot_colored_map():
     data = np.loadtxt('big.dem', skiprows=1)
 
-    data=normalize_image(data)
+    data = normalize_image(data)
 
-    plt.imshow(data)
+    colored_data = color_image(data)
+
+    plt.imshow(colored_data)
     plt.savefig('colored_map.pdf')
+
 
 class HSV2RGBtests(unittest.TestCase):
     def test_black(self):
