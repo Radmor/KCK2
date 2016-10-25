@@ -131,8 +131,8 @@ def gradient_hsv_custom(v):
     return hsv2rgb(360 - v * 360, v, 1)
 
 
-def gradient_hsv_gr(v):
-    return hsv2rgb(120 - (v * 120), 1, 1)
+def gradient_hsv_gr(color, brightness):
+    return hsv2rgb(120 - (color * 120), 1, brightness)
 
 def normalize_image(imageData):
     min = np.amin(imageData)
@@ -149,13 +149,9 @@ def color_image(imageData):
     imageWidth=500
     img = np.zeros((imageWidth, imageHeight, 3))
 
-    # imageData=imageData[...,np.newaxis]
-    #
-    # for x in np.nditer(imageData, op_flags=['readwrite']):
-    #     x[...] = gradient_hsv_gr(x)
+    brightness=1
 
-
-    return np.array([[gradient_hsv_gr(imageData[j,i]) for i in range(0,500)] for j in range(0,500)])
+    return np.array([[gradient_hsv_gr(imageData[j,i],brightness) for i in range(0,500)] for j in range(0,500)])
 
 def plot_colored_map():
     data = np.loadtxt('big.dem', skiprows=1)
