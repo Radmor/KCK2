@@ -51,6 +51,8 @@ def hsv2rgb(h, s, v):
 
     m = v - c
 
+    h = h % 360
+
     if h >= 0 and h < 60:
         Rprim, Gprim, Bprim = (c, x, 0)
     elif h >= 60 and h < 120:
@@ -63,8 +65,6 @@ def hsv2rgb(h, s, v):
         Rprim, Gprim, Bprim = (x, 0, c)
     elif h >= 300 and h < 360:
         Rprim, Gprim, Bprim = (c, 0, x)
-    elif h == 360:
-        Rprim, Gprim, Bprim = (c, x, 0)
     else:
         raise ValueError
 
@@ -133,6 +133,7 @@ def gradient_hsv_custom(v):
 
 
 def gradient_hsv_gr(color, brightness):
+    brightness = brightness if brightness <= 1 else 1
     return hsv2rgb(120 - (color * 120), 1, brightness)
 
 
@@ -147,7 +148,7 @@ def normalize_image(imageData):
 
 
 def check_correct_chords(j, i, imageWidth, imageHeight):
-    if(j<0 or j>=imageHeight or i<0 or i>=imageHeight):
+    if (j < 0 or j >= imageHeight or i < 0 or i >= imageHeight):
         return False
     return True
 
@@ -168,14 +169,20 @@ def calculate_aspect_angle(dzdx, dzdy):
     return aspect
 
 
+def shade_modif(shadeValue):
+    lightenFactor = 0.6  # rozjasnienie cienii
+    shadeValue += lightenFactor
+
+    return shadeValue
+
+
 def calculate_brightness(imageData):
     # setting
-    altitude = 90
-    azimuth = 315
-    azimuth = 45
+    altitude = 90  # ustawienie kata padania slonca
+    azimuth = 315  # ustawienie z jakiego kierunku pada swiatlo
 
     cellsize = 1
-    z_factor = 1
+    zFactor = 1
 
     shadows = []
 
@@ -183,47 +190,47 @@ def calculate_brightness(imageData):
 
     for j in range(0, imageHeight):
         for i in range(0, imageWidth):
-            a = (imageData[j - 1, i - 1] if check_correct_chords(j - 1, i - 1, imageWidth, imageHeight) else 0)
-            b = (imageData[j - 1, i] if check_correct_chords(j - 1, i, imageWidth, imageHeight) else 0)
-            c = (imageData[j - 1, i + 1] if check_correct_chords(j - 1, i + 1, imageWidth, imageHeight) else 0)
+            e = imageData[j, i]
 
-            d = (imageData[j, i - 1] if check_correct_chords(j, i - 1, imageWidth, imageHeight) else 0)
-            f = (imageData[j, i + 1] if check_correct_chords(j, i + 1, imageWidth, imageHeight) else 0)
+            a = (imageData[j - 1, i - 1] if check_correct_chords(j - 1, i - 1, imageWidth, imageHeight) else e)
+            b = (imageData[j - 1, i] if check_correct_chords(j - 1, i, imageWidth, imageHeight) else e)
+            c = (imageData[j - 1, i + 1] if check_correct_chords(j - 1, i + 1, imageWidth, imageHeight) else e)
 
-            g = (imageData[j + 1, i - 1] if check_correct_chords(j + 1, i - 1, imageWidth, imageHeight) else 0)
-            h = (imageData[j + 1, i] if check_correct_chords(j + 1, i, imageWidth, imageHeight) else 0)
-            iFromData = (imageData[j + 1, i + 1] if check_correct_chords(j + 1, i + 1, imageWidth, imageHeight) else 0)
+            d = (imageData[j, i - 1] if check_correct_chords(j, i - 1, imageWidth, imageHeight) else e)
+            f = (imageData[j, i + 1] if check_correct_chords(j, i + 1, imageWidth, imageHeight) else e)
+
+            g = (imageData[j + 1, i - 1] if check_correct_chords(j + 1, i - 1, imageWidth, imageHeight) else e)
+            h = (imageData[j + 1, i] if check_correct_chords(j + 1, i, imageWidth, imageHeight) else e)
+            iFromData = (imageData[j + 1, i + 1] if check_correct_chords(j + 1, i + 1, imageWidth, imageHeight) else e)
 
             dzdx = ((c + 2 * f + iFromData) - (a + 2 * d + g)) / (8 * cellsize)
             dzdy = ((g + 2 * h + iFromData) - (a + 2 * b + c)) / (8 * cellsize)
 
-            # dzdx = ((imageData[j - 1, i + 1] + 2 * imageData[j, i + 1] + imageData[j + 1, i + 1]) - (
-            #     imageData[j - 1, i - 1] + 2 * imageData[j, i - 1] + imageData[j + 1, i - 1])) / (8 * cellsize)
-            # dzdy = ((imageData[j + 1, i - 1] + 2 * imageData[j + 1, i] + imageData[j + 1, i + 1]) - (
-            #     imageData[j - 1, i - 1] + 2 * imageData[j - 1, i] + imageData[j - 1, i + 1])) / (8 * cellsize)
+            slopeAngle = math.atan(zFactor * math.sqrt((dzdx ** 2 + dzdy ** 2)))
 
-            slope_angle = math.atan(z_factor * math.sqrt((dzdx ** 2 + dzdy ** 2)))
+            zenithAngle = (90 - altitude) * math.pi / 180.0
 
-            zenith_angle = (90 - altitude) * math.pi / 180.0
+            azimuthMath = 360.0 - azimuth + 90
 
-            azimuth_math = 360.0 - azimuth + 90
+            azimuthAngle = (azimuthMath if azimuthMath < 360 else azimuthMath - 360) * math.pi / 180.0
 
-            azimuth_angle = (azimuth_math if azimuth_math < 360 else azimuth_math - 360) * math.pi / 180.0
+            aspectAngle = calculate_aspect_angle(dzdx, dzdy)
 
-            aspect_angle = calculate_aspect_angle(dzdx, dzdy)
+            shadeCalc = ((math.cos(zenithAngle) * math.cos(slopeAngle)) +
+                         (math.sin(zenithAngle) * math.sin(slopeAngle) * math.cos(
+                             azimuthAngle - aspectAngle)))
 
-            shadows.append(((math.cos(zenith_angle) * math.cos(slope_angle)) +
-                            (math.sin(zenith_angle) * math.sin(slope_angle) * math.cos(azimuth_angle - aspect_angle))))
+            shadows.append(shade_modif(shadeCalc))
 
-
-    return np.array(shadows).reshape((imageHeight,imageWidth))
+    return np.array(shadows).reshape((imageHeight, imageWidth))
 
 
 def color_image(imageData, shadows):
     imageHeight, imageWidth = imageData.shape
 
     return np.array(
-        [[gradient_hsv_gr(imageData[j, i], shadows[j,i]) for i in range(0, imageHeight)] for j in range(0, imageWidth)])
+        [[gradient_hsv_gr(imageData[j, i], shadows[j, i]) for i in range(0, imageHeight)] for j in
+         range(0, imageWidth)])
 
 
 def plot_colored_map():
@@ -233,9 +240,9 @@ def plot_colored_map():
 
     data = normalize_image(data)
 
-    colored_data = color_image(data, shadows)
+    coloredData = color_image(data, shadows)
 
-    plt.imshow(colored_data)
+    plt.imshow(coloredData)
     plt.savefig('colored_map.pdf')
 
 
