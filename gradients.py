@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 import numpy as np
 import unittest
+import math
 
 from matplotlib import colors
 
@@ -134,6 +135,7 @@ def gradient_hsv_custom(v):
 def gradient_hsv_gr(color, brightness):
     return hsv2rgb(120 - (color * 120), 1, brightness)
 
+
 def normalize_image(imageData):
     min = np.amin(imageData)
     heightRange = np.amax(imageData) - min
@@ -143,22 +145,95 @@ def normalize_image(imageData):
 
     return imageData
 
-def color_image(imageData):
 
-    imageHeight=500
-    imageWidth=500
-    img = np.zeros((imageWidth, imageHeight, 3))
+def check_correct_chords(j, i, imageWidth, imageHeight):
+    if(j<0 or j>=imageHeight or i<0 or i>=imageHeight):
+        return False
+    return True
 
-    brightness=1
 
-    return np.array([[gradient_hsv_gr(imageData[j,i],brightness) for i in range(0,500)] for j in range(0,500)])
+def calculate_aspect_angle(dzdx, dzdy):
+    if (dzdx != 0):
+        aspect = math.atan2(dzdy, -dzdx)
+        if aspect < 0:
+            aspect = 2 * math.pi + aspect
+    if (dzdx == 0):
+        if (dzdy > 0):
+            aspect = math.pi / 2
+        elif (dzdy < 0):
+            aspect = 2 * math.pi - math.pi / 2
+        else:
+            aspect = 0
+
+    return aspect
+
+
+def calculate_brightness(imageData):
+    # setting
+    altitude = 90
+    azimuth = 315
+    azimuth = 45
+
+    cellsize = 1
+    z_factor = 1
+
+    shadows = []
+
+    imageHeight, imageWidth = imageData.shape
+
+    for j in range(0, imageHeight):
+        for i in range(0, imageWidth):
+            a = (imageData[j - 1, i - 1] if check_correct_chords(j - 1, i - 1, imageWidth, imageHeight) else 0)
+            b = (imageData[j - 1, i] if check_correct_chords(j - 1, i, imageWidth, imageHeight) else 0)
+            c = (imageData[j - 1, i + 1] if check_correct_chords(j - 1, i + 1, imageWidth, imageHeight) else 0)
+
+            d = (imageData[j, i - 1] if check_correct_chords(j, i - 1, imageWidth, imageHeight) else 0)
+            f = (imageData[j, i + 1] if check_correct_chords(j, i + 1, imageWidth, imageHeight) else 0)
+
+            g = (imageData[j + 1, i - 1] if check_correct_chords(j + 1, i - 1, imageWidth, imageHeight) else 0)
+            h = (imageData[j + 1, i] if check_correct_chords(j + 1, i, imageWidth, imageHeight) else 0)
+            iFromData = (imageData[j + 1, i + 1] if check_correct_chords(j + 1, i + 1, imageWidth, imageHeight) else 0)
+
+            dzdx = ((c + 2 * f + iFromData) - (a + 2 * d + g)) / (8 * cellsize)
+            dzdy = ((g + 2 * h + iFromData) - (a + 2 * b + c)) / (8 * cellsize)
+
+            # dzdx = ((imageData[j - 1, i + 1] + 2 * imageData[j, i + 1] + imageData[j + 1, i + 1]) - (
+            #     imageData[j - 1, i - 1] + 2 * imageData[j, i - 1] + imageData[j + 1, i - 1])) / (8 * cellsize)
+            # dzdy = ((imageData[j + 1, i - 1] + 2 * imageData[j + 1, i] + imageData[j + 1, i + 1]) - (
+            #     imageData[j - 1, i - 1] + 2 * imageData[j - 1, i] + imageData[j - 1, i + 1])) / (8 * cellsize)
+
+            slope_angle = math.atan(z_factor * math.sqrt((dzdx ** 2 + dzdy ** 2)))
+
+            zenith_angle = (90 - altitude) * math.pi / 180.0
+
+            azimuth_math = 360.0 - azimuth + 90
+
+            azimuth_angle = (azimuth_math if azimuth_math < 360 else azimuth_math - 360) * math.pi / 180.0
+
+            aspect_angle = calculate_aspect_angle(dzdx, dzdy)
+
+            shadows.append(((math.cos(zenith_angle) * math.cos(slope_angle)) +
+                            (math.sin(zenith_angle) * math.sin(slope_angle) * math.cos(azimuth_angle - aspect_angle))))
+
+
+    return np.array(shadows).reshape((imageHeight,imageWidth))
+
+
+def color_image(imageData, shadows):
+    imageHeight, imageWidth = imageData.shape
+
+    return np.array(
+        [[gradient_hsv_gr(imageData[j, i], shadows[j,i]) for i in range(0, imageHeight)] for j in range(0, imageWidth)])
+
 
 def plot_colored_map():
     data = np.loadtxt('big.dem', skiprows=1)
 
+    shadows = calculate_brightness(data)
+
     data = normalize_image(data)
 
-    colored_data = color_image(data)
+    colored_data = color_image(data, shadows)
 
     plt.imshow(colored_data)
     plt.savefig('colored_map.pdf')
